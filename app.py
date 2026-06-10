@@ -52,10 +52,10 @@ _TIERS = [
     {
         "name": "✈️ SILICON VALLEY",
         "price": "100 000€",
-        "price_sub": "Pay our trip to SF — we go launch the business",
-        "features": ["Everything in Dyson", "Round trip to San Francisco", "Hotel in Palo Alto", "Meetings on Sand Hill Road", "Mécénat — zero equity, just the fame", "You fund us, we build the future"],
+        "price_sub": "Pay our trip to SF, we go launch the business",
+        "features": ["Everything in Dyson", "Round trip to San Francisco", "Hotel in Palo Alto", "Meetings on Sand Hill Road", "You fund us, we build the future"],
         "missing": [],
-        "cta": "Pay for our trip — zero equity",
+        "cta": "Pay for our trip",
         "url": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnpnMXZ5Nm1oZTJ3dHM5MGdud2t3aG11cXZjNmowYnE4NHpmaWs3eCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/lOadmkNRWkO3jITOpe/giphy.gif",
         "badge": None,
         "featured": True,
@@ -96,7 +96,7 @@ def render_search_card() -> None:
                 review = st.text_area(
                     label="review",
                     label_visibility="collapsed",
-                    placeholder="Paste a banking app review...",
+                    placeholder="e.g. The app is great overall but customer support takes forever to respond and I got charged twice last month with no explanation.",
                     height=130,
                     key="home_review",
                 )
@@ -370,7 +370,7 @@ def render_about() -> None:
     st.markdown('<hr class="ft-divider"/>', unsafe_allow_html=True)
     st.markdown("## About")
     st.markdown(
-        '<p style="font-size:1.05rem;color:#6b7280;line-height:1.7;max-width:680px;">'
+        '<p style="font-size:1.05rem;color:#6b7280;line-height:1.7;">'
         "Fintell was built as a final project at <strong>Le Wagon Paris, Data Science &amp; AI Bootcamp #2271</strong>, June 2026. "
         "We trained a custom NLP pipeline on 181K banking app reviews across 6 UK neobanks, "
         "and turned it into a competitive intelligence tool for product teams. "
@@ -378,20 +378,32 @@ def render_about() -> None:
         "</p>",
         unsafe_allow_html=True,
     )
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+    <style>
+    [data-testid="stMarkdown"]:has(#ft-team-marker) + [data-testid="stHorizontalBlock"] { align-items: stretch !important; }
+    [data-testid="stMarkdown"]:has(#ft-team-marker) + [data-testid="stHorizontalBlock"] [data-testid="stColumn"] { display: flex !important; flex-direction: column !important; }
+    [data-testid="stMarkdown"]:has(#ft-team-marker) + [data-testid="stHorizontalBlock"] [data-testid="stVerticalBlock"] { flex: 1 !important; display: flex !important; flex-direction: column !important; }
+    [data-testid="stMarkdown"]:has(#ft-team-marker) + [data-testid="stHorizontalBlock"] [data-testid="stMarkdown"] { flex: 1 !important; display: flex !important; flex-direction: column !important; }
+    [data-testid="stMarkdown"]:has(#ft-team-marker) + [data-testid="stHorizontalBlock"] [data-testid="stMarkdown"] > div { flex: 1 !important; display: flex !important; flex-direction: column !important; }
+    [data-testid="stMarkdown"]:has(#ft-team-marker) + [data-testid="stHorizontalBlock"] .ft-team-card { flex: 1 !important; }
+    </style>
+    <div id="ft-team-marker"></div>
+    """, unsafe_allow_html=True)
     cols = st.columns(5, gap="medium")
     for col, (name, role, github_url, avatar_url) in zip(cols, _TEAM):
         with col:
             st.markdown(f"""
             <a href="{github_url}" target="_blank" style="text-decoration:none;">
-            <div style="text-align:center;padding:1.25rem 0.5rem;border:1px solid #e5e7eb;
-                        border-radius:12px;background:white;transition:border-color 0.2s;"
+            <div class="ft-team-card" style="display:flex;flex-direction:column;align-items:center;
+                        text-align:center;padding:1.25rem 0.5rem;min-height:210px;
+                        border:1px solid #e5e7eb;border-radius:12px;background:white;
+                        transition:border-color 0.2s;"
                  onmouseover="this.style.borderColor='#9ca3af'"
                  onmouseout="this.style.borderColor='#e5e7eb'">
                 <img src="{avatar_url}" style="width:48px;height:48px;border-radius:50%;
                      object-fit:cover;margin:0 auto 0.6rem;display:block;" />
                 <div style="font-weight:600;font-size:0.9rem;color:#0a0a0a;">{name}</div>
-                <div style="font-size:0.78rem;color:#9ca3af;margin-top:2px;">{role}</div>
+                <div style="font-size:0.78rem;color:#9ca3af;margin-top:2px;flex:1;">{role}</div>
                 <div style="font-size:0.72rem;color:#2563EB;margin-top:6px;">GitHub ↗</div>
             </div>
             </a>
