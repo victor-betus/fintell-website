@@ -9,6 +9,8 @@ import random
 import time
 from pathlib import Path
 
+from deep_translator import GoogleTranslator
+
 import pandas as pd
 import plotly.graph_objects as go
 import requests
@@ -346,6 +348,17 @@ def check_pro_access() -> bool:
             else:
                 st.error("Invalid code.")
     return False
+
+
+# ── Translation ──────────────────────────────────────────────────────────────
+
+
+def translate_to_english(text: str) -> str:
+    """Translates to English if needed — returns original on failure."""
+    try:
+        return GoogleTranslator(source="auto", target="en").translate(text[:4500]) or text
+    except Exception:
+        return text
 
 
 # ── API calls ─────────────────────────────────────────────────────────────────

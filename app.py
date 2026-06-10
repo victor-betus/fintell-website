@@ -8,7 +8,7 @@ from utils import (
     inject_css, nav, footer, _logo_b64,
     analyze_with_animation, parse_result, render_result_card,
     real_scores, real_trends, matrix_html, trend_chart,
-    run_scrape_animation,
+    run_scrape_animation, translate_to_english,
     BANKS, TOPICS, PERIODS, PAYPAL_CHOUQUETTES, PAYPAL_DYSON, PAYPAL_SF, API_BASE,
     FREE_TOPIC_COUNT, PRO_PASSWORD,
 )
@@ -105,7 +105,10 @@ def render_search_card() -> None:
                         st.warning("Please enter a review.")
                     else:
                         try:
-                            sent_data, cat_data = analyze_with_animation(review.strip())
+                            review_en = translate_to_english(review.strip())
+                            if review_en != review.strip():
+                                st.caption("Translated to English for analysis.")
+                            sent_data, cat_data = analyze_with_animation(review_en)
                             sentiment, confidence, category = parse_result(sent_data, cat_data)
                             render_result_card(sentiment, confidence, category)
                         except Exception as exc:
@@ -333,7 +336,7 @@ def render_pricing() -> None:
     st.markdown('<hr class="ft-divider"/>', unsafe_allow_html=True)
     _anchor("pricing")
     st.markdown("## Simple, honest pricing.")
-    st.write("Start free. Buy us a drink when you're ready.")
+    st.write("Start free. Buy us a fan, some chouquettes, or a trip to SF when you're ready.")
     st.markdown("<br>", unsafe_allow_html=True)
 
     cards_html = "".join(_tier_card_html(t) for t in _TIERS)
@@ -367,7 +370,7 @@ def render_about() -> None:
     st.markdown("## About")
     st.markdown(
         '<p style="font-size:1.05rem;color:#6b7280;line-height:1.7;max-width:680px;">'
-        "Fintell was built as a final project at <strong>Le Wagon Paris — Data Science &amp; AI Bootcamp #2271</strong>, June 2026. "
+        "Fintell was built as a final project at <strong>Le Wagon Paris, Data Science &amp; AI Bootcamp #2271</strong>, June 2026. "
         "We trained a custom NLP pipeline on 181K banking app reviews across 6 UK neobanks, "
         "and turned it into a competitive intelligence tool for product teams. "
         "Every team member benchmarked and compared models end-to-end."
