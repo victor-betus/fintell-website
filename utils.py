@@ -265,8 +265,11 @@ def inject_css() -> None:
 
     /* ── Mobile ── */
     .ft-mobile-br { display: none; }
+    .ft-footer-short { display: none; }
     @media (max-width: 768px) {
         .ft-mobile-br { display: block; }
+        .ft-footer-full  { display: none; }
+        .ft-footer-short { display: inline; }
         .block-container {
             padding-left: 1rem !important;
             padding-right: 1rem !important;
@@ -330,7 +333,8 @@ def footer() -> None:
     <div class="ft-footer">
         <img src="data:image/png;base64,{_logo_b64()}" style="height:24px;width:auto;" />
         <div class="ft-footer-right">
-            <span>Le Wagon · Data Science &amp; AI Bootcamp #2271 · 2026</span>
+            <span class="ft-footer-full">Le Wagon · Data Science &amp; AI Bootcamp #2271 · 2026</span>
+            <span class="ft-footer-short">Le Wagon DS/AI · 2026</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
