@@ -4,11 +4,11 @@ import random
 
 import streamlit as st
 from utils import (
-    inject_css, nav, footer,
+    inject_css, nav, footer, _logo_b64,
     analyze_with_animation, parse_result, render_result_card,
     real_scores, real_trends, matrix_html, trend_chart,
     run_scrape_animation,
-    BANKS, TOPICS, PERIODS, PAYPAL_PINTE, PAYPAL_KEBAB, PAYPAL_JET,
+    BANKS, TOPICS, PERIODS, PAYPAL_CHOUQUETTES, PAYPAL_DYSON, PAYPAL_SF,
     FREE_TOPIC_COUNT, PRO_PASSWORD,
 )
 
@@ -30,32 +30,32 @@ _TIERS = [
         "name": "🍰 CHOUQUETTES",
         "price": "~30€",
         "price_sub": "A box for the whole team",
-        "features": ["Everything in Free", "Full matrix (7 topics)", "Trend charts per bank", "PRO access"],
+        "features": ["Everything in Mice in Learning", "Full matrix (7 topics)", "Trend charts per bank", "PRO access"],
         "missing": ["CSV / Excel export"],
         "cta": "Buy the chouquettes",
-        "url": PAYPAL_PINTE,
+        "url": PAYPAL_CHOUQUETTES,
         "badge": None,
         "featured": False,
     },
     {
-        "name": "🍕 PIZZA",
-        "price": "~60€",
-        "price_sub": "Pizza party for the team",
+        "name": "🌀 DYSON",
+        "price": "349,99€",
+        "price_sub": "A fan for each desk",
         "features": ["Everything in Chouquettes", "CSV export", "Excel export", "Priority support", "PRO access"],
         "missing": [],
-        "cta": "Order the pizza",
-        "url": PAYPAL_KEBAB,
+        "cta": "Cool down the team",
+        "url": PAYPAL_DYSON,
         "badge": "Most popular",
         "featured": False,
     },
     {
         "name": "✈️ SILICON VALLEY",
-        "price": "100,000€",
-        "price_sub": "All-expenses-paid trip to SF",
-        "features": ["Everything in Pizza", "Round trip to San Francisco", "Hotel in Palo Alto", "Meetings on Sand Hill Road", "Mécénat — zero equity, just the fame", "You fund us, we build the future"],
+        "price": "100 000€",
+        "price_sub": "Pay our trip to SF — we go launch the business",
+        "features": ["Everything in Dyson", "Round trip to San Francisco", "Hotel in Palo Alto", "Meetings on Sand Hill Road", "Mécénat — zero equity, just the fame", "You fund us, we build the future"],
         "missing": [],
         "cta": "Pay for our trip — zero equity",
-        "url": PAYPAL_JET,
+        "url": PAYPAL_SF,
         "badge": None,
         "featured": True,
     },
@@ -70,14 +70,14 @@ def _anchor(name: str) -> None:
 
 def render_hero() -> None:
     _anchor("home")
-    st.markdown("""
+    st.markdown(f"""
     <div style="padding:0.5rem 0 0.75rem;text-align:center;">
-        <h1 style="margin-bottom:0.5rem;">FINTELL<span style="color:#2563EB;">.</span></h1>
-        <p style="font-size:1.15rem;color:#374151;margin:0.5rem 0 0.25rem;line-height:1.5;">
+        <img src="data:image/png;base64,{_logo_b64()}" style="height:72px;width:auto;margin-bottom:0.25rem;" />
+        <p style="font-size:1.15rem;color:#374151;margin:0.25rem 0 0.15rem;line-height:1.5;">
             AI competitive intelligence, straight from user reviews.
         </p>
         <p style="font-size:0.95rem;color:#9ca3af;margin-bottom:1.25rem;">
-            The neobank war is won on UX. We track every battle.
+            Turn thousands of customer reviews into strategic decisions.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -135,10 +135,10 @@ def render_search_card() -> None:
                 key="matrix_run_btn",
             ):
                 months_val = PERIODS[period_label]
-                df_run = real_scores(selected_banks, months_val)
-                trends_run, labels_run = real_trends(df_run, months_val)
                 n = random.randint(900, 3500) * len(selected_banks)
                 run_scrape_animation(n)
+                df_run = real_scores(selected_banks, months_val)
+                trends_run, labels_run = real_trends(df_run, months_val)
                 st.session_state.update({
                     "matrix_done": True,
                     "matrix_banks_run": selected_banks,

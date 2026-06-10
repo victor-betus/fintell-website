@@ -1,14 +1,20 @@
 """Shared utilities: CSS, navigation, API helpers, data generators, rendering."""
 
+import base64
 import concurrent.futures
 import io
 import random
 import time
+from pathlib import Path
 
 import pandas as pd
 import plotly.graph_objects as go
 import requests
 import streamlit as st
+
+def _logo_b64() -> str:
+    path = Path(__file__).parent / "assets" / "logo.png"
+    return base64.b64encode(path.read_bytes()).decode()
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -37,10 +43,10 @@ TOPIC_MAP: dict[str, str] = {
 }
 TOPICS = list(TOPIC_MAP.keys())
 PERIODS: dict[str, int] = {"3 months": 3, "6 months": 6, "1 year": 12}
-PAYPAL_URL   = "https://paypal.me/victorbetus"
-PAYPAL_PINTE = "https://paypal.me/victorbetus/30"
-PAYPAL_KEBAB = "https://paypal.me/victorbetus/60"
-PAYPAL_JET   = "https://paypal.me/victorbetus/100000"
+PAYPAL_URL        = "https://paypal.me/victorbetus"
+PAYPAL_CHOUQUETTES = "https://paypal.me/victorbetus/30"
+PAYPAL_DYSON       = "https://paypal.me/victorbetus/34999"
+PAYPAL_SF          = "https://paypal.me/victorbetus/100000"
 PRO_PASSWORD     = "fintell2026"
 FREE_TOPIC_COUNT = 4
 
@@ -81,6 +87,7 @@ def inject_css() -> None:
 
     .block-container {
         padding-top: 0 !important;
+        padding-bottom: 0 !important;
         max-width: 100% !important;
         padding-left: 4rem !important;
         padding-right: 4rem !important;
@@ -112,7 +119,7 @@ def inject_css() -> None:
     /* ── Navigation ── */
     .ft-nav {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 1rem 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 0.75rem;
+        padding: 0.9rem 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 1.25rem;
         min-height: 64px;
     }
     .ft-logo     { font-size: 1.3rem; font-weight: 600; letter-spacing: -1px; color: #0a0a0a; }
@@ -292,7 +299,7 @@ def inject_css() -> None:
 
     /* ── Footer ── */
     .ft-footer {
-        margin-top: 6rem; padding: 2rem 0; border-top: 1px solid #f0f0f0;
+        margin-top: 4rem; padding: 1.5rem 0 2rem; border-top: 1px solid #f0f0f0;
         display: flex; justify-content: space-between; align-items: center;
     }
     .ft-footer-logo { font-size: 1rem; font-weight: 600; letter-spacing: -0.5px; color: #0a0a0a; }
@@ -304,18 +311,18 @@ def inject_css() -> None:
 
 
 def nav() -> None:
-    st.markdown("""
+    st.markdown(f"""
     <div class="ft-nav">
-        <span class="ft-logo">FINTELL<span class="ft-logo-dot">.</span></span>
+        <img src="data:image/png;base64,{_logo_b64()}" style="height:36px;width:auto;" />
         <a class="ft-btn-primary" href="#pricing">Get PRO</a>
     </div>
     """, unsafe_allow_html=True)
 
 
 def footer() -> None:
-    st.markdown("""
+    st.markdown(f"""
     <div class="ft-footer">
-        <span class="ft-footer-logo">FINTELL<span style="color:#2563EB;">.</span></span>
+        <img src="data:image/png;base64,{_logo_b64()}" style="height:24px;width:auto;" />
         <div class="ft-footer-right">
             <span>Built at Le Wagon Paris · Data Science &amp; AI #2271 · June 2026</span>
         </div>
@@ -411,6 +418,8 @@ def render_result_card(sentiment: str, confidence: float, category: str) -> None
     """, unsafe_allow_html=True)
 
 
+_API_N_SAMPLE = 30  # reviews per bank × topic
+
 # ── Real data from HuggingFace ────────────────────────────────────────────────
 
 
@@ -466,6 +475,60 @@ def real_trends(df_scores: pd.DataFrame, period_months: int) -> tuple[dict, list
                 scores.append(round(pos / total * 10, 2) if total > 0 else None)
             trends[display][bank] = scores
     return trends, labels
+
+
+# def api_scores(banks: list[str], period_months: int) -> pd.DataFrame:
+#     """Score matrix via live API calls — kept for future use but too slow for demo."""
+#     df = load_fintell_data()
+#     max_date = df["review_date"].max()
+#     df = df[df["review_date"] >= max_date - pd.DateOffset(months=period_months)]
+#     df = df.dropna(subset=["review_text"])
+#     status = st.empty()
+#     status.info("Scraping reviews from App Store & Google Play…")
+#     tasks: list[tuple[str, str, str]] = []
+#     for bank in banks:
+#         bank_df = df[df["app"] == bank]
+#         for display, model in TOPIC_MAP.items():
+#             topic_df = bank_df[bank_df["topic_label_ALL"] == model]
+#             sample = topic_df.sample(min(_API_N_SAMPLE, len(topic_df)), random_state=42)
+#             for text in sample["review_text"]:
+#                 tasks.append((bank, display, str(text)[:400]))
+#     total = len(tasks)
+#     status.empty()
+#     bar = st.progress(0, text=f"Fintell API — 0 / {total} reviews…")
+#     done = [0]
+#     def _call(task):
+#         bank, display, text = task
+#         try:
+#             resp = requests.get(f"{API_BASE}/predict_sentiment", params={"review": text}, timeout=15)
+#             resp.raise_for_status()
+#             data = resp.json()
+#             sentiment = (data.get("sentiment") or data.get("label") or data.get("prediction") or "").lower()
+#             return (bank, display, sentiment)
+#         except Exception:
+#             return None
+#     results = []
+#     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as pool:
+#         futures = {pool.submit(_call, t): t for t in tasks}
+#         for f in concurrent.futures.as_completed(futures):
+#             done[0] += 1
+#             bar.progress(done[0] / total, text=f"Fintell API — {done[0]} / {total} reviews analyzed…")
+#             r = f.result()
+#             if r:
+#                 results.append(r)
+#     bar.empty()
+#     rows = []
+#     for bank in banks:
+#         bank_res = [(d, s) for b, d, s in results if b == bank]
+#         row = {}
+#         for display in TOPICS:
+#             topic_res = [s for d, s in bank_res if d == display]
+#             pos = sum(1 for s in topic_res if s == "positive")
+#             neg = sum(1 for s in topic_res if s == "negative")
+#             total_pn = pos + neg
+#             row[display] = round(pos / total_pn * 10, 1) if total_pn > 0 else 5.0
+#         rows.append(row)
+#     return pd.DataFrame(rows, index=banks, columns=TOPICS)
 
 
 # ── Synthetic data (fallback) ─────────────────────────────────────────────────
@@ -550,19 +613,30 @@ def trend_chart(topic: str, bank_series: dict[str, list], period_months: int, la
         labels = [f"M-{period_months - i}" for i in range(period_months)]
     fig = go.Figure()
     for idx, (bank, series) in enumerate(bank_series.items()):
+        color = _PALETTE[idx % len(_PALETTE)]
+        # build per-point text — only show bank name at last non-None point
+        last_idx = next((i for i in range(len(series) - 1, -1, -1) if series[i] is not None), None)
+        text = [None] * len(series)
+        if last_idx is not None:
+            text[last_idx] = f"  {bank}"
         fig.add_trace(go.Scatter(
-            x=labels, y=series, mode="lines+markers", name=bank,
-            line=dict(width=2.5, color=_PALETTE[idx % len(_PALETTE)]),
+            x=labels, y=series,
+            mode="lines+markers+text",
+            name=bank,
+            text=text,
+            textposition="middle right",
+            textfont=dict(size=11, color=color, family="Inter"),
+            line=dict(width=2.5, color=color),
             marker=dict(size=5),
             connectgaps=True,
+            showlegend=False,
         ))
     fig.update_layout(
         title=dict(text=f"<b>{topic}</b>", font=dict(size=14, family="Inter")),
         height=300,
-        margin=dict(l=10, r=10, t=40, b=10),
-        legend=dict(orientation="h", y=-0.28, font=dict(size=11)),
+        margin=dict(l=10, r=80, t=40, b=10),
         yaxis=dict(range=[0, 11], title="Score /10", gridcolor="#f3f4f6"),
-        xaxis=dict(gridcolor="#f3f4f6"),
+        xaxis=dict(type="category", gridcolor="#f3f4f6"),
         plot_bgcolor="white",
         paper_bgcolor="white",
     )
