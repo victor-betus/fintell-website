@@ -82,6 +82,7 @@ def inject_css() -> None:
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
 
+    html { font-size: 20px; }
     html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     #MainMenu, footer, header, .stDeployButton { visibility: hidden; }
 
@@ -205,7 +206,7 @@ def inject_css() -> None:
         font-size: 0.8rem; background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; margin: 4px;
     }
     .ft-muted   { color: #9ca3af; font-size: 0.875rem; }
-    .ft-divider { border: none; border-top: 1px solid #f0f0f0; margin: 3rem 0; }
+    .ft-divider { border: none !important; border-top: none !important; background: none !important; margin: 3rem 0; height: 0; }
 
     /* ── PRO gate ── */
     .ft-pro-badge {
