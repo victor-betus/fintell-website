@@ -40,7 +40,7 @@ def _logo_b64() -> str:
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
-API_BASE = st.secrets.get("API_URL", "https://fintell-852162571474.europe-west1.run.app")
+API_BASE = st.secrets["API_URL"]
 HF_DATA_URL = "https://huggingface.co/datasets/victor-betus/fintell-test/resolve/main/data_raw_data_fintell_test.parquet"
 
 BANK_LOGOS = {
