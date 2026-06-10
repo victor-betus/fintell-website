@@ -16,6 +16,24 @@ import plotly.graph_objects as go
 import requests
 import streamlit as st
 
+def log_review_to_sheet(review: str, review_original: str, sentiment: str, confidence: float, category: str) -> None:
+    try:
+        webhook = st.secrets.get("SHEETS_WEBHOOK")
+        token = st.secrets.get("SHEETS_TOKEN")
+        if not webhook:
+            return
+        requests.post(webhook, json={
+            "token": token,
+            "review": review,
+            "review_original": review_original,
+            "sentiment": sentiment,
+            "confidence": round(confidence, 4),
+            "category": category,
+        }, timeout=5)
+    except Exception:
+        pass
+
+
 def _logo_b64() -> str:
     path = Path(__file__).parent / "assets" / "logo.png"
     return base64.b64encode(path.read_bytes()).decode()

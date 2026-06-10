@@ -6,7 +6,7 @@ import threading
 import streamlit as st
 from utils import (
     inject_css, nav, footer, _logo_b64,
-    analyze_with_animation, parse_result, render_result_card,
+    analyze_with_animation, parse_result, render_result_card, log_review_to_sheet,
     real_scores, real_trends, matrix_html, trend_chart,
     run_scrape_animation, translate_to_english,
     BANKS, TOPICS, PERIODS, PAYPAL_CHOUQUETTES, PAYPAL_DYSON, PAYPAL_SF, API_BASE,
@@ -111,6 +111,7 @@ def render_search_card() -> None:
                             sent_data, cat_data = analyze_with_animation(review_en)
                             sentiment, confidence, category = parse_result(sent_data, cat_data)
                             render_result_card(sentiment, confidence, category)
+                            log_review_to_sheet(review_en, review.strip(), sentiment, confidence, category)
                         except Exception as exc:
                             st.error(f"API error: {exc}")
 
