@@ -77,9 +77,10 @@ def inject_css() -> None:
     [data-testid="stSidebarNav"]    { display: none !important; }
 
     .block-container {
-        padding-top: 0.5rem !important;
-        max-width: 900px;
-        margin: auto;
+        padding-top: 0 !important;
+        max-width: 100% !important;
+        padding-left: 4rem !important;
+        padding-right: 4rem !important;
     }
 
     [data-testid="stAppViewContainer"] {
@@ -108,7 +109,8 @@ def inject_css() -> None:
     /* ── Navigation ── */
     .ft-nav {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 0.75rem;
+        padding: 1rem 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 0.75rem;
+        min-height: 64px;
     }
     .ft-logo     { font-size: 1.3rem; font-weight: 600; letter-spacing: -1px; color: #0a0a0a; }
     .ft-logo-dot { color: #2563EB; }
@@ -141,19 +143,31 @@ def inject_css() -> None:
     .stButton > button[kind="primary"] div { color: #ffffff !important; }
     .stButton > button[kind="primary"]:hover { background-color: #222222 !important; }
 
-    /* ── Tabs — pill style ── */
+    /* ── Tabs — centered sliding pill ── */
     .stTabs [data-baseweb="tab-list"] {
-        background: #ebebeb; padding: 4px; border-radius: 10px;
-        gap: 2px; border-bottom: none !important;
+        background: #f0f0f0;
+        padding: 4px;
+        border-radius: 12px;
+        gap: 0;
+        border-bottom: none !important;
+        width: fit-content;
+        margin: 0 auto;
     }
     .stTabs [data-baseweb="tab"] {
-        background: transparent !important; border-radius: 7px !important;
-        padding: 0.4rem 1.2rem !important; font-size: 0.9rem !important;
-        font-weight: 500 !important; color: #6b7280 !important; border: none !important;
+        background: transparent !important;
+        border-radius: 9px !important;
+        padding: 0.35rem 1.2rem !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+        color: #9ca3af !important;
+        border: none !important;
+        transition: color 0.2s ease !important;
     }
     .stTabs [aria-selected="true"] {
-        background: #ffffff !important; color: #0a0a0a !important;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.10) !important;
+        background: #ffffff !important;
+        color: #0a0a0a !important;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.08) !important;
+        transition: background 0.2s ease, color 0.2s ease !important;
     }
     .stTabs [data-baseweb="tab-highlight"] { display: none !important; }
     .stTabs [data-baseweb="tab-border"]    { display: none !important; }
@@ -213,13 +227,39 @@ def inject_css() -> None:
     .ft-stat-num { font-size: 2rem; font-weight: 700; letter-spacing: -1px; color: #0a0a0a; }
     .ft-stat-lbl { font-size: 0.75rem; color: #9ca3af; margin-top: 0.2rem; line-height: 1.5; }
 
-    /* ── Pricing CTA buttons (override Streamlit's global a{color:blue}) ── */
+    /* ── Pricing CTA buttons ── */
     a.ft-pricing-btn,
     a.ft-pricing-btn:visited,
     a.ft-pricing-btn:hover,
     a.ft-pricing-btn:active {
         color: #ffffff !important;
         text-decoration: none !important;
+    }
+
+    /* ── Contact form submit button ── */
+    [data-testid="stFormSubmitButton"] > button {
+        background-color: #0a0a0a !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+    }
+    [data-testid="stFormSubmitButton"] > button p,
+    [data-testid="stFormSubmitButton"] > button span {
+        color: #ffffff !important;
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 768px) {
+        .block-container {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+        h1 { font-size: 2.2rem !important; }
+        .ft-pricing-grid-inner { grid-template-columns: 1fr !important; }
+        [data-testid="stColumns"] { flex-direction: column !important; }
+        .ft-stats { flex-direction: column; gap: 1.5rem; }
+        .ft-nav { padding: 0.75rem 0; }
     }
 
     /* ── Footer ── */
@@ -239,14 +279,6 @@ def nav() -> None:
     st.markdown("""
     <div class="ft-nav">
         <span class="ft-logo">FINTELL<span class="ft-logo-dot">.</span></span>
-        <div class="ft-nav-links">
-            <a class="ft-nav-link" href="#home">Home</a>
-            <a class="ft-nav-link" href="#product">Product</a>
-            <a class="ft-nav-link" href="#research">Research</a>
-            <a class="ft-nav-link" href="#pricing">Pricing</a>
-            <a class="ft-nav-link" href="#about">About</a>
-            <a class="ft-nav-link" href="#contact">Contact</a>
-        </div>
         <a class="ft-btn-primary" href="#pricing">Get PRO</a>
     </div>
     """, unsafe_allow_html=True)

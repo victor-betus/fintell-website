@@ -16,13 +16,13 @@ from utils import (
 
 _TIERS = [
     {
-        "name": "FREE",
-        "price": "Free forever",
-        "price_sub": "",
+        "name": "🐭 MICE IN LEARNING",
+        "price": "2€",
+        "price_sub": "A piece of cheese",
         "features": ["Live demo — 1 review at a time", "Sentiment + category", "4 topics in the matrix"],
         "missing": ["Full matrix (7 topics)", "Trend charts", "CSV / Excel export"],
-        "cta": "Start free",
-        "url": None,
+        "cta": "Feed the rat",
+        "url": "https://paypal.me/victorbetus/2",
         "badge": None,
         "featured": False,
     },
@@ -52,7 +52,7 @@ _TIERS = [
         "name": "SILICON VALLEY",
         "price": "100,000€",
         "price_sub": "All-expenses-paid trip to SF",
-        "features": ["Everything in Pizza", "Round trip to San Francisco", "Hotel in Palo Alto", "Meetings on Sand Hill Road", "Direct access to Victor"],
+        "features": ["Everything in Pizza", "Round trip to San Francisco", "Hotel in Palo Alto", "Meetings on Sand Hill Road", "Mécénat — zero equity, just the fame", "Pay for us, we build the future"],
         "missing": [],
         "cta": "Book the trip",
         "url": PAYPAL_JET,
@@ -79,9 +79,6 @@ def render_hero() -> None:
         <p style="font-size:0.95rem;color:#9ca3af;margin-bottom:1.25rem;">
             The neobank war is won on UX. We track every battle.
         </p>
-        <a class="ft-btn-primary" href="#product">Try live demo</a>
-        &nbsp;&nbsp;
-        <a class="ft-btn-secondary" href="#pricing">Get PRO</a>
     </div>
     """, unsafe_allow_html=True)
 
@@ -90,7 +87,7 @@ def render_search_card() -> None:
     _anchor("product")
     _, col, _ = st.columns([1, 8, 1])
     with col:
-        tab_analyze, tab_matrix = st.tabs(["Analyze a review", "Build the matrix"])
+        tab_analyze, tab_matrix = st.tabs(["Analyze a review", "Competitive Intelligence"])
 
         with tab_analyze:
             review = st.text_area(
@@ -184,6 +181,23 @@ def render_search_card() -> None:
                 visible = [t for t in df.columns if t not in blur]
                 for topic in visible:
                     st.plotly_chart(trend_chart(topic, trends[topic], months), use_container_width=True)
+                for topic in blur:
+                    st.markdown(f"""
+                    <div style="position:relative;border-radius:12px;overflow:hidden;
+                                margin-bottom:1rem;border:1px solid #e5e7eb;">
+                        <div style="filter:blur(6px);pointer-events:none;user-select:none;
+                                    height:200px;background:linear-gradient(135deg,#f9fafb,#f3f4f6);
+                                    display:flex;align-items:center;justify-content:center;
+                                    font-size:1.5rem;font-weight:700;color:#e5e7eb;">{topic}</div>
+                        <div style="position:absolute;inset:0;display:flex;flex-direction:column;
+                                    align-items:center;justify-content:center;gap:0.75rem;">
+                            <div style="font-weight:600;font-size:0.95rem;color:#0a0a0a;">{topic}</div>
+                            <a href="#pricing" style="background:#0a0a0a;color:#fff;padding:0.5rem 1.25rem;
+                               border-radius:8px;text-decoration:none;font-weight:600;font-size:0.85rem;">
+                               Get PRO →</a>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
 
 def render_stats() -> None:
@@ -284,7 +298,10 @@ def _tier_card_html(tier: dict) -> str:
         f'border-radius:4px;margin-left:6px;text-transform:uppercase;">{tier["badge"]}</span>'
         if tier["badge"] else ""
     )
-    border = "2px solid #0a0a0a" if tier["featured"] else "1px solid #e5e7eb"
+    border = "2px solid transparent" if tier["featured"] else "1px solid #e5e7eb"
+    outline = 'background: linear-gradient(white,white) padding-box, linear-gradient(135deg,#2563EB,#7c3aed) border-box;' if tier["featured"] else ""
+    price_color = "background:linear-gradient(135deg,#2563EB,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;" if tier["featured"] else "color:#0a0a0a;"
+    btn_style = "background:linear-gradient(135deg,#2563EB,#7c3aed);" if tier["featured"] else "background:#0a0a0a;"
     features = "".join(
         f'<div style="font-size:0.85rem;color:#374151;margin:0.35rem 0;text-align:left;">+ {f}</div>'
         for f in tier["features"]
@@ -294,7 +311,7 @@ def _tier_card_html(tier: dict) -> str:
     )
     btn = (
         f'<a class="ft-pricing-btn" href="{tier["url"]}" target="_blank"'
-        f' style="display:block;background:#0a0a0a;color:#ffffff;'
+        f' style="display:block;{btn_style}color:#ffffff;'
         f'text-align:center;padding:0.6rem 1rem;border-radius:8px;'
         f'text-decoration:none;font-weight:600;font-size:0.88rem;">'
         f'{tier["cta"]}</a>'
@@ -305,13 +322,13 @@ def _tier_card_html(tier: dict) -> str:
     )
     return f"""
     <div style="display:flex;flex-direction:column;border:{border};border-radius:12px;
-                padding:1.5rem;background:#fff;box-sizing:border-box;text-align:center;">
+                padding:1.5rem;background:#fff;box-sizing:border-box;text-align:center;{outline}">
         <div style="font-size:0.72rem;font-weight:700;letter-spacing:1.5px;
                     color:#9ca3af;text-transform:uppercase;margin-bottom:0.5rem;">
             {tier["name"]}{badge}
         </div>
         <div style="font-size:1.8rem;font-weight:700;letter-spacing:-1px;
-                    color:#0a0a0a;line-height:1.1;">{tier["price"]}</div>
+                    line-height:1.1;{price_color}">{tier["price"]}</div>
         <div style="font-size:0.78rem;color:#9ca3af;margin-bottom:1rem;min-height:1.2rem;">
             {tier["price_sub"] or "&nbsp;"}
         </div>
@@ -332,7 +349,12 @@ def render_pricing() -> None:
 
     cards_html = "".join(_tier_card_html(t) for t in _TIERS)
     st.markdown(f"""
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;align-items:stretch;">
+    <style>
+    .ft-pricing-grid {{ display:grid; grid-template-columns:repeat(4,1fr); gap:1.25rem; align-items:stretch; }}
+    @media(max-width:900px) {{ .ft-pricing-grid {{ grid-template-columns:repeat(2,1fr); }} }}
+    @media(max-width:500px) {{ .ft-pricing-grid {{ grid-template-columns:1fr; }} }}
+    </style>
+    <div class="ft-pricing-grid">
         {cards_html}
     </div>
     <p style="text-align:center;color:#9ca3af;font-size:0.85rem;margin-top:1.5rem;">
