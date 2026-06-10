@@ -12,12 +12,6 @@ _TEAM = [
     ("G", "Gerardo", "Visualization"),
 ]
 
-_MARKET_STATS = [
-    ("1,000+", "reviews per day",  "UK banking apps alone"),
-    ("8 years", "of data",         "2018 to 2026"),
-    ("6 banks", "tracked",         "and benchmarked"),
-]
-
 
 def _avatar(initials: str, name: str, role: str) -> str:
     return f"""
@@ -42,57 +36,24 @@ def main() -> None:
     inject_css()
     nav()
 
-    st.markdown("## About")
-    st.markdown("""
-    <p style="font-size:1.3rem;font-weight:500;line-height:1.7;color:#0a0a0a;max-width:720px;">
-        Every day, thousands of users leave unfiltered feedback about your competitors' apps.
-        Most teams never read them. The ones that do spend days doing it manually.
-        By then, it's too late.
-    </p>
-    """, unsafe_allow_html=True)
+    _, col, _ = st.columns([1, 4, 1])
+    with col:
+        st.markdown("## About")
+        st.markdown(
+            '<p style="font-size:1.1rem;color:#6b7280;line-height:1.7;max-width:640px;">'
+            "Fintell turns 8 years of banking app reviews into competitive intelligence. "
+            "Built by a team of 5 at Le Wagon Paris — Data Science &amp; AI Bootcamp, June 2026."
+            "</p>",
+            unsafe_allow_html=True,
+        )
 
-    st.markdown('<hr class="ft-divider"/>', unsafe_allow_html=True)
+        st.markdown('<hr class="ft-divider"/>', unsafe_allow_html=True)
 
-    st.markdown("### The vision")
-    st.write(
-        "Fintell was built to give every product team the competitive intelligence "
-        "that only the best-resourced teams used to have. Automated. Real-time. Actionable."
-    )
-
-    st.markdown('<hr class="ft-divider"/>', unsafe_allow_html=True)
-
-    st.markdown("### The market")
-    cols = st.columns(3)
-    for col, (num, label, sub) in zip(cols, _MARKET_STATS):
-        with col:
-            st.markdown(
-                f'<div class="ft-stat" style="text-align:left;">'
-                f'<div class="ft-stat-num">{num}</div>'
-                f'<div class="ft-stat-lbl">{label}<br>'
-                f'<span style="color:#d1d5db;">{sub}</span></div></div>',
-                unsafe_allow_html=True,
-            )
-
-    st.markdown('<hr class="ft-divider"/>', unsafe_allow_html=True)
-
-    st.markdown("### Built by")
-    st.write(
-        "Fintell was built by a team of 5 at Le Wagon Paris Data Science & AI Bootcamp, June 2026. "
-        "We combined 8 years of banking app review data, state-of-the-art NLP, and a product "
-        "obsession to build something we wished existed."
-    )
-    st.markdown(
-        '<p class="ft-muted">Le Wagon Paris · Data Science & AI #2271 · June 2026</p>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown('<hr class="ft-divider"/>', unsafe_allow_html=True)
-
-    st.markdown("### Team")
-    cols = st.columns(5, gap="medium")
-    for col, (initials, name, role) in zip(cols, _TEAM):
-        with col:
-            st.markdown(_avatar(initials, name, role), unsafe_allow_html=True)
+        st.markdown("### Team")
+        cols = st.columns(5, gap="medium")
+        for col_item, (initials, name, role) in zip(cols, _TEAM):
+            with col_item:
+                st.markdown(_avatar(initials, name, role), unsafe_allow_html=True)
 
     footer()
 

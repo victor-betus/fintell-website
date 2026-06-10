@@ -13,43 +13,46 @@ import streamlit as st
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 API_BASE = st.secrets.get("API_URL", "https://fintell-852162571474.europe-west1.run.app")
+HF_DATA_URL = "https://huggingface.co/datasets/victor-betus/fintell-test/resolve/main/data_raw_data_fintell_test.parquet"
 
 BANK_LOGOS = {
-    "Revolut":  "https://logo.clearbit.com/revolut.com",
-    "Monzo":    "https://logo.clearbit.com/monzo.com",
-    "Barclays": "https://logo.clearbit.com/barclays.co.uk",
-    "HSBC":     "https://logo.clearbit.com/hsbc.com",
-    "Lloyds":   "https://logo.clearbit.com/lloydsbank.com",
-    "Starling": "https://logo.clearbit.com/starlingbank.com",
+    "Revolut":   "https://logo.clearbit.com/revolut.com",
+    "Monzo":     "https://logo.clearbit.com/monzo.com",
+    "Barclays":  "https://logo.clearbit.com/barclays.co.uk",
+    "HSBC":      "https://logo.clearbit.com/hsbc.com",
+    "Lloyds":    "https://logo.clearbit.com/lloydsbank.com",
+    "Santander": "https://logo.clearbit.com/santander.co.uk",
 }
 
-BANKS = ["Revolut", "Monzo", "Barclays", "HSBC", "Lloyds", "Starling"]
-TOPICS = [
-    "App Experience",
-    "Customer Service",
-    "Fees & Pricing",
-    "Security & Trust",
-    "Onboarding",
-    "Card & Limits",
-    "Transfers",
-]
+BANKS = ["Revolut", "Monzo", "Barclays", "HSBC", "Lloyds", "Santander"]
+
+TOPIC_MAP: dict[str, str] = {
+    "Fees & Travel":    "Fees & Service & Travel",
+    "Support & Access": "Support & Access",
+    "Transfers":        "Money Transfers & Payment Management",
+    "App Features":     "Transactions, Features & Usability",
+    "Login & Nav":      "Login, Navigation & Functionality Issues",
+    "Performance":      "Updates, Crashes & Performance",
+    "Cards & Payments": "Cards & Payments",
+}
+TOPICS = list(TOPIC_MAP.keys())
 PERIODS: dict[str, int] = {"3 months": 3, "6 months": 6, "1 year": 12}
 PAYPAL_URL   = "https://paypal.me/victorbetus"
 PAYPAL_PINTE = "https://paypal.me/victorbetus/30"
 PAYPAL_KEBAB = "https://paypal.me/victorbetus/60"
-PAYPAL_JET   = "https://paypal.me/victorbetus/1500"
+PAYPAL_JET   = "https://paypal.me/victorbetus/100000"
 PRO_PASSWORD     = "fintell2026"
 FREE_TOPIC_COUNT = 4
 
 _SCRAPE_STEPS = [
     (0.10, "Connecting to App Store & Google Play scrapers…"),
     (0.22, "Fetching reviews — Revolut, Monzo…"),
-    (0.36, "Fetching reviews — Barclays, HSBC, Lloyds, Starling…"),
+    (0.36, "Fetching reviews — Barclays, HSBC, Lloyds, Santander…"),
     (0.50, "Deduplicating & cleaning {n:,} raw reviews…"),
-    (0.64, "Running Fintell NLP sentiment analysis…"),
-    (0.78, "Classifying reviews by topic…"),
+    (0.64, "Running Fintell sentiment model on each review…"),
+    (0.78, "Classifying topics with Fintell NLP pipeline…"),
     (0.90, "Aggregating scores per bank × topic…"),
-    (1.00, "Analysis complete."),
+    (1.00, "Done — {n:,} reviews processed."),
 ]
 
 _ANALYSIS_STEPS = [
@@ -260,6 +263,31 @@ def inject_css() -> None:
         [data-testid="stColumns"] { flex-direction: column !important; }
         .ft-stats { flex-direction: column; gap: 1.5rem; }
         .ft-nav { padding: 0.75rem 0; }
+
+        /* Tabs: full width, each tab shares space equally */
+        .stTabs [data-baseweb="tab-list"] {
+            width: 100% !important;
+        }
+        .stTabs [data-baseweb="tab"] {
+            flex: 1 !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            padding: 0.35rem 0.5rem !important;
+            font-size: 0.78rem !important;
+        }
+
+        /* Result card: stack vertically, prevent pill overflow */
+        .ft-result {
+            flex-direction: column !important;
+            gap: 0.75rem !important;
+        }
+        .ft-cat-pill {
+            display: inline-block !important;
+            max-width: 100% !important;
+            word-break: break-word !important;
+        }
     }
 
     /* ── Footer ── */
@@ -289,12 +317,7 @@ def footer() -> None:
     <div class="ft-footer">
         <span class="ft-footer-logo">FINTELL<span style="color:#2563EB;">.</span></span>
         <div class="ft-footer-right">
-            <a href="/Product">Product</a>
-            <a href="/Research">Research</a>
-            <a href="/Pricing">Pricing</a>
-            <a href="/About">About</a>
-            <a href="/Contact">Contact</a>
-            <span style="margin-left:2rem;">Built at Le Wagon Paris · Data Science & AI #2271 · June 2026</span>
+            <span>Built at Le Wagon Paris · Data Science &amp; AI #2271 · June 2026</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -388,7 +411,64 @@ def render_result_card(sentiment: str, confidence: float, category: str) -> None
     """, unsafe_allow_html=True)
 
 
-# ── Synthetic data ────────────────────────────────────────────────────────────
+# ── Real data from HuggingFace ────────────────────────────────────────────────
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def load_fintell_data() -> pd.DataFrame:
+    resp = requests.get(HF_DATA_URL, timeout=120)
+    resp.raise_for_status()
+    df = pd.read_parquet(io.BytesIO(resp.content))
+    df["review_date"] = pd.to_datetime(df["review_date"], errors="coerce")
+    df["app"] = df["app"].replace({"LLoyds": "Lloyds"})
+    return df
+
+
+def real_scores(banks: list[str], period_months: int) -> pd.DataFrame:
+    df = load_fintell_data()
+    max_date = df["review_date"].max()
+    df = df[df["review_date"] >= max_date - pd.DateOffset(months=period_months)]
+    rows = []
+    for bank in banks:
+        bank_df = df[df["app"] == bank]
+        row = {}
+        for display, model in TOPIC_MAP.items():
+            t = bank_df[bank_df["topic_label_ALL"] == model]
+            pos = (t["review_sentiment_label"] == "positive").sum()
+            neg = (t["review_sentiment_label"] == "negative").sum()
+            total = pos + neg
+            row[display] = round(pos / total * 10, 1) if total > 0 else 5.0
+        rows.append(row)
+    return pd.DataFrame(rows, index=banks, columns=TOPICS)
+
+
+def real_trends(df_scores: pd.DataFrame, period_months: int) -> tuple[dict, list[str]]:
+    banks = list(df_scores.index)
+    df = load_fintell_data()
+    max_date = df["review_date"].max()
+    df = df[df["review_date"] >= max_date - pd.DateOffset(months=period_months)]
+    df = df.copy()
+    df["month"] = df["review_date"].dt.to_period("M")
+    all_months = sorted(df["month"].dropna().unique())
+    labels = [str(m) for m in all_months]
+    trends: dict[str, dict[str, list]] = {}
+    for display, model in TOPIC_MAP.items():
+        trends[display] = {}
+        topic_df = df[df["topic_label_ALL"] == model]
+        for bank in banks:
+            bank_df = topic_df[topic_df["app"] == bank]
+            scores = []
+            for m in all_months:
+                month_df = bank_df[bank_df["month"] == m]
+                pos = (month_df["review_sentiment_label"] == "positive").sum()
+                neg = (month_df["review_sentiment_label"] == "negative").sum()
+                total = pos + neg
+                scores.append(round(pos / total * 10, 2) if total > 0 else None)
+            trends[display][bank] = scores
+    return trends, labels
+
+
+# ── Synthetic data (fallback) ─────────────────────────────────────────────────
 
 
 def synthetic_scores(banks: list[str], period_months: int) -> pd.DataFrame:
@@ -417,9 +497,9 @@ def synthetic_trends(df: pd.DataFrame, period_months: int) -> dict[str, dict[str
 
 
 def score_colors(score: float) -> tuple[str, str]:
-    if score >= 3.8:
+    if score >= 7.5:
         return "#d1fae5", "#065f46"
-    if score >= 2.8:
+    if score >= 5.5:
         return "#fef3c7", "#92400e"
     return "#fee2e2", "#991b1b"
 
@@ -465,21 +545,23 @@ def matrix_html(df: pd.DataFrame, blur_topics: list[str]) -> str:
     return "".join(out)
 
 
-def trend_chart(topic: str, bank_series: dict[str, list[float]], period_months: int) -> go.Figure:
-    labels = [f"M-{period_months - i}" for i in range(period_months)]
+def trend_chart(topic: str, bank_series: dict[str, list], period_months: int, labels: list[str] | None = None) -> go.Figure:
+    if labels is None:
+        labels = [f"M-{period_months - i}" for i in range(period_months)]
     fig = go.Figure()
     for idx, (bank, series) in enumerate(bank_series.items()):
         fig.add_trace(go.Scatter(
             x=labels, y=series, mode="lines+markers", name=bank,
             line=dict(width=2.5, color=_PALETTE[idx % len(_PALETTE)]),
             marker=dict(size=5),
+            connectgaps=True,
         ))
     fig.update_layout(
         title=dict(text=f"<b>{topic}</b>", font=dict(size=14, family="Inter")),
         height=300,
         margin=dict(l=10, r=10, t=40, b=10),
         legend=dict(orientation="h", y=-0.28, font=dict(size=11)),
-        yaxis=dict(range=[0, 5.5], title="Score /5", gridcolor="#f3f4f6"),
+        yaxis=dict(range=[0, 11], title="Score /10", gridcolor="#f3f4f6"),
         xaxis=dict(gridcolor="#f3f4f6"),
         plot_bgcolor="white",
         paper_bgcolor="white",

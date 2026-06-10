@@ -6,7 +6,7 @@ import streamlit as st
 from utils import (
     inject_css, nav, footer,
     analyze_with_animation, parse_result, render_result_card,
-    synthetic_scores, synthetic_trends, matrix_html, trend_chart,
+    real_scores, real_trends, matrix_html, trend_chart,
     run_scrape_animation,
     BANKS, TOPICS, PERIODS, PAYPAL_PINTE, PAYPAL_KEBAB, PAYPAL_JET,
     FREE_TOPIC_COUNT, PRO_PASSWORD,
@@ -16,7 +16,7 @@ from utils import (
 
 _TIERS = [
     {
-        "name": "🐭 MICE IN LEARNING",
+        "name": "🧀 MICE IN LEARNING",
         "price": "2€",
         "price_sub": "A piece of cheese",
         "features": ["Live demo — 1 review at a time", "Sentiment + category", "4 topics in the matrix"],
@@ -27,7 +27,7 @@ _TIERS = [
         "featured": False,
     },
     {
-        "name": "CHOUQUETTES",
+        "name": "🍰 CHOUQUETTES",
         "price": "~30€",
         "price_sub": "A box for the whole team",
         "features": ["Everything in Free", "Full matrix (7 topics)", "Trend charts per bank", "PRO access"],
@@ -38,7 +38,7 @@ _TIERS = [
         "featured": False,
     },
     {
-        "name": "PIZZA",
+        "name": "🍕 PIZZA",
         "price": "~60€",
         "price_sub": "Pizza party for the team",
         "features": ["Everything in Chouquettes", "CSV export", "Excel export", "Priority support", "PRO access"],
@@ -49,12 +49,12 @@ _TIERS = [
         "featured": False,
     },
     {
-        "name": "SILICON VALLEY",
+        "name": "✈️ SILICON VALLEY",
         "price": "100,000€",
         "price_sub": "All-expenses-paid trip to SF",
-        "features": ["Everything in Pizza", "Round trip to San Francisco", "Hotel in Palo Alto", "Meetings on Sand Hill Road", "Mécénat — zero equity, just the fame", "Pay for us, we build the future"],
+        "features": ["Everything in Pizza", "Round trip to San Francisco", "Hotel in Palo Alto", "Meetings on Sand Hill Road", "Mécénat — zero equity, just the fame", "You fund us, we build the future"],
         "missing": [],
-        "cta": "Book the trip",
+        "cta": "Pay for our trip — zero equity",
         "url": PAYPAL_JET,
         "badge": None,
         "featured": True,
@@ -134,70 +134,56 @@ def render_search_card() -> None:
                 disabled=not selected_banks,
                 key="matrix_run_btn",
             ):
+                months_val = PERIODS[period_label]
+                df_run = real_scores(selected_banks, months_val)
+                trends_run, labels_run = real_trends(df_run, months_val)
                 n = random.randint(900, 3500) * len(selected_banks)
                 run_scrape_animation(n)
                 st.session_state.update({
                     "matrix_done": True,
                     "matrix_banks_run": selected_banks,
-                    "matrix_months_run": PERIODS[period_label],
+                    "matrix_months_run": months_val,
                     "matrix_n_run": n,
+                    "matrix_df": df_run,
+                    "matrix_trends": trends_run,
+                    "matrix_labels": labels_run,
                 })
 
             if st.session_state.get("matrix_done"):
-                banks  = st.session_state["matrix_banks_run"]
-                months = st.session_state["matrix_months_run"]
-                n      = st.session_state["matrix_n_run"]
-                is_pro = st.session_state.get("pro", False)
+                banks        = st.session_state["matrix_banks_run"]
+                months       = st.session_state["matrix_months_run"]
+                n            = st.session_state["matrix_n_run"]
+                df           = st.session_state["matrix_df"]
+                trends       = st.session_state["matrix_trends"]
+                trend_labels = st.session_state["matrix_labels"]
+                is_pro       = st.session_state.get("pro", False)
 
-                st.success(f"**{n:,}** reviews analyzed · **{len(banks)} banks** · **{months} months**")
-
-                df     = synthetic_scores(banks, months)
-                trends = synthetic_trends(df, months)
-                blur   = [] if is_pro else TOPICS[FREE_TOPIC_COUNT:]
+                st.success(f"**{n:,}** reviews scraped & analyzed · **{len(banks)} banks** · **{months} months**")
 
                 st.markdown("**Score matrix**")
-                st.caption("Score /5 · green ≥ 3.8 · orange ≥ 2.8 · red < 2.8")
-                st.markdown(matrix_html(df, blur), unsafe_allow_html=True)
-
-                if blur and not is_pro:
-                    st.markdown(
-                        f'<p class="ft-muted" style="margin-top:0.5rem;">'
-                        f'{len(blur)} topics locked. '
-                        f'<a href="#pricing" style="color:#0a0a0a;font-weight:600;">Get PRO →</a></p>',
-                        unsafe_allow_html=True,
-                    )
-                    pwd = st.text_input("PRO code", type="password",
-                                        placeholder="Enter PRO code…", key="matrix_pwd",
-                                        label_visibility="collapsed")
-                    if st.button("Unlock", key="matrix_unlock"):
-                        if pwd == PRO_PASSWORD:
-                            st.session_state["pro"] = True
-                            st.rerun()
-                        else:
-                            st.error("Wrong code.")
+                st.caption("Score /10 · green ≥ 7.5 · orange ≥ 5.5 · red < 5.5")
+                st.markdown(matrix_html(df, []), unsafe_allow_html=True)
 
                 st.markdown('<hr style="border:none;border-top:1px solid #f0f0f0;margin:1.5rem 0;"/>', unsafe_allow_html=True)
                 st.markdown("**Score trends**")
-                visible = [t for t in df.columns if t not in blur]
-                for topic in visible:
-                    st.plotly_chart(trend_chart(topic, trends[topic], months), use_container_width=True)
-                for topic in blur:
-                    st.markdown(f"""
-                    <div style="position:relative;border-radius:12px;overflow:hidden;
-                                margin-bottom:1rem;border:1px solid #e5e7eb;">
-                        <div style="filter:blur(6px);pointer-events:none;user-select:none;
-                                    height:200px;background:linear-gradient(135deg,#f9fafb,#f3f4f6);
-                                    display:flex;align-items:center;justify-content:center;
-                                    font-size:1.5rem;font-weight:700;color:#e5e7eb;">{topic}</div>
-                        <div style="position:absolute;inset:0;display:flex;flex-direction:column;
-                                    align-items:center;justify-content:center;gap:0.75rem;">
-                            <div style="font-weight:600;font-size:0.95rem;color:#0a0a0a;">{topic}</div>
-                            <a href="#pricing" style="background:#0a0a0a;color:#fff;padding:0.5rem 1.25rem;
-                               border-radius:8px;text-decoration:none;font-weight:600;font-size:0.85rem;">
-                               Get PRO →</a>
-                        </div>
+                preview_topic = "Support & Access"
+                st.plotly_chart(trend_chart(preview_topic, trends[preview_topic], months, trend_labels), use_container_width=True)
+
+                st.markdown("""
+                <div style="border:1px solid #e5e7eb;border-radius:12px;padding:1.5rem 2rem;
+                            background:#fafafa;text-align:center;margin-top:0.5rem;">
+                    <div style="font-weight:600;font-size:1rem;color:#0a0a0a;margin-bottom:0.4rem;">
+                        Get full access
                     </div>
-                    """, unsafe_allow_html=True)
+                    <div style="font-size:0.88rem;color:#6b7280;margin-bottom:1rem;">
+                        All years of data · All 7 topics · Trend charts · CSV &amp; Excel export
+                    </div>
+                    <a href="#pricing" style="background:#0a0a0a;color:#fff;padding:0.55rem 1.5rem;
+                       border-radius:8px;text-decoration:none;font-weight:600;font-size:0.88rem;">
+                       See pricing →
+                    </a>
+                </div>
+                """, unsafe_allow_html=True)
 
 
 def render_stats() -> None:
@@ -359,88 +345,50 @@ def render_pricing() -> None:
     </div>
     <p style="text-align:center;color:#9ca3af;font-size:0.85rem;margin-top:1.5rem;">
         After payment, we send your PRO code within 24h.
-        <a href="#contact" style="color:#9ca3af;">Questions? Contact us.</a>
     </p>
     """, unsafe_allow_html=True)
+
+
+_TEAM = [
+    ("Victor",  "Sith Lord du Produit · Packager de l'Empire · ML/DL",          "https://github.com/victor-betus",  "https://avatars.githubusercontent.com/u/260678422?v=4"),
+    ("Hélène",  "Pâtissière du ML · Exploratrice de Modèles · Reine du Streamlit", "https://github.com/LeleneTian",     "https://avatars.githubusercontent.com/u/275649394?v=4"),
+    ("Thomas",  "Hantavirus Engineer · Patient 0 · Créateur de Clusters · Architecte API",   "https://github.com/Elyokle",        "https://avatars.githubusercontent.com/u/272031024?v=4"),
+    ("Kassim",  "Sensei Guru des Endpoints · Maître Incontesté de l'API",        "https://github.com/ksa2003",        "https://avatars.githubusercontent.com/u/188040760?v=4"),
+    ("Gerardo", "Félin du ML · Seigneur GCS · Dompteur de BiGRU · MLOps Master", "https://github.com/LordGER2024",    "https://avatars.githubusercontent.com/u/179365933?v=4"),
+]
 
 
 def render_about() -> None:
     _anchor("about")
     st.markdown('<hr class="ft-divider"/>', unsafe_allow_html=True)
     st.markdown("## About")
-    st.markdown("""
-    <p style="font-size:1.3rem;font-weight:500;line-height:1.7;color:#0a0a0a;max-width:720px;">
-        Every day, thousands of users leave unfiltered feedback about your competitors' apps.
-        Most teams never read them. The ones that do spend days doing it manually.
-        By then, it's too late.
-    </p>
-    """, unsafe_allow_html=True)
-
-    st.markdown('<hr class="ft-divider"/>', unsafe_allow_html=True)
-    st.markdown("### The market")
-    cols = st.columns(3)
-    for col, (num, label, sub) in zip(cols, [
-        ("1,000+", "reviews per day", "UK banking apps alone"),
-        ("8 years", "of data", "2018 to 2026"),
-        ("6 banks", "tracked", "and benchmarked"),
-    ]):
-        with col:
-            st.markdown(
-                f'<div class="ft-stat" style="text-align:left;">'
-                f'<div class="ft-stat-num">{num}</div>'
-                f'<div class="ft-stat-lbl">{label}<br>'
-                f'<span style="color:#d1d5db;">{sub}</span></div></div>',
-                unsafe_allow_html=True,
-            )
-
-    st.markdown('<hr class="ft-divider"/>', unsafe_allow_html=True)
-    st.write(
-        "Fintell was built by a team of 5 at Le Wagon Paris Data Science & AI Bootcamp, June 2026. "
-        "We combined 8 years of banking app review data, state-of-the-art NLP, and a product "
-        "obsession to build something we wished existed."
+    st.markdown(
+        '<p style="font-size:1.05rem;color:#6b7280;line-height:1.7;max-width:680px;">'
+        "Fintell was built as a final project at <strong>Le Wagon Paris — Data Science &amp; AI Bootcamp #2271</strong>, June 2026. "
+        "We trained a custom NLP pipeline on 181K banking app reviews across 6 UK neobanks, "
+        "and turned it into a competitive intelligence tool for product teams. "
+        "Every team member benchmarked and compared models end-to-end."
+        "</p>",
+        unsafe_allow_html=True,
     )
-    st.markdown('<p class="ft-muted">Le Wagon Paris · Data Science & AI #2271 · June 2026</p>', unsafe_allow_html=True)
-
-    st.markdown('<hr class="ft-divider"/>', unsafe_allow_html=True)
-    st.markdown("### Team")
-    team = [("V", "Victor", "Product & Lead"), ("H", "Hélène", "ML Models"),
-            ("T", "Thomas", "Model Optimization"), ("K", "Kassim", "Model Comparison"),
-            ("G", "Gerardo", "Visualization")]
+    st.markdown("<br>", unsafe_allow_html=True)
     cols = st.columns(5, gap="medium")
-    for col, (ini, name, role) in zip(cols, team):
+    for col, (name, role, github_url, avatar_url) in zip(cols, _TEAM):
         with col:
             st.markdown(f"""
+            <a href="{github_url}" target="_blank" style="text-decoration:none;">
             <div style="text-align:center;padding:1.25rem 0.5rem;border:1px solid #e5e7eb;
-                        border-radius:12px;background:white;">
-                <div style="width:44px;height:44px;background:#0a0a0a;color:white;border-radius:50%;
-                            display:flex;align-items:center;justify-content:center;
-                            font-size:1rem;font-weight:600;margin:0 auto 0.6rem;">{ini}</div>
+                        border-radius:12px;background:white;transition:border-color 0.2s;"
+                 onmouseover="this.style.borderColor='#9ca3af'"
+                 onmouseout="this.style.borderColor='#e5e7eb'">
+                <img src="{avatar_url}" style="width:48px;height:48px;border-radius:50%;
+                     object-fit:cover;margin:0 auto 0.6rem;display:block;" />
                 <div style="font-weight:600;font-size:0.9rem;color:#0a0a0a;">{name}</div>
                 <div style="font-size:0.78rem;color:#9ca3af;margin-top:2px;">{role}</div>
+                <div style="font-size:0.72rem;color:#2563EB;margin-top:6px;">GitHub ↗</div>
             </div>
+            </a>
             """, unsafe_allow_html=True)
-
-
-def render_contact() -> None:
-    _anchor("contact")
-    st.markdown('<hr class="ft-divider"/>', unsafe_allow_html=True)
-    st.markdown("## Contact")
-
-    _, col, _ = st.columns([1, 4, 1])
-    with col:
-        with st.form("contact_form", clear_on_submit=True):
-            st.text_input("Name")
-            st.text_input("Email")
-            st.selectbox("Subject", ["General inquiry", "PRO access", "Partnership", "Press"])
-            st.text_area("Message", height=140)
-            sent = st.form_submit_button("Send message", type="primary", use_container_width=True)
-        if sent:
-            st.success("Message received. We'll be in touch shortly.")
-        st.markdown(
-            '<p class="ft-muted" style="text-align:center;margin-top:1rem;">'
-            'Or reach us at <strong>fintell@lewagon.com</strong></p>',
-            unsafe_allow_html=True,
-        )
 
 
 def main() -> None:
@@ -454,12 +402,8 @@ def main() -> None:
     nav()
     render_hero()
     render_search_card()
-    render_stats()
-    render_arguments()
-    render_research()
-    render_pricing()
     render_about()
-    render_contact()
+    render_pricing()
     footer()
 
 
