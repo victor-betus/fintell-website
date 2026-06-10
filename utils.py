@@ -3,7 +3,6 @@
 import concurrent.futures
 import io
 import random
-import subprocess
 import time
 
 import pandas as pd
@@ -283,24 +282,6 @@ def check_pro_access() -> bool:
     return False
 
 
-# ── Auth ──────────────────────────────────────────────────────────────────────
-
-
-@st.cache_data(ttl=3300)
-def _get_identity_token() -> str:
-    result = subprocess.run(
-        ["gcloud", "auth", "print-identity-token"],
-        capture_output=True, text=True, timeout=15,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f"gcloud error: {result.stderr.strip()}")
-    return result.stdout.strip()
-
-
-def _auth_headers() -> dict[str, str]:
-    return {"Authorization": f"Bearer {_get_identity_token()}"}
-
-
 # ── API calls ─────────────────────────────────────────────────────────────────
 
 
@@ -308,7 +289,6 @@ def _fetch_sentiment(review: str) -> dict:
     resp = requests.get(
         f"{API_BASE}/predict_sentiment",
         params={"review": review},
-        headers=_auth_headers(),
         timeout=60,
     )
     resp.raise_for_status()
@@ -319,7 +299,6 @@ def _fetch_category(review: str) -> dict:
     resp = requests.get(
         f"{API_BASE}/predict_category",
         params={"review": review},
-        headers=_auth_headers(),
         timeout=60,
     )
     resp.raise_for_status()
