@@ -1,5 +1,7 @@
 """Shared utilities: CSS, navigation, API helpers, data generators, rendering."""
 
+from __future__ import annotations
+
 import base64
 import concurrent.futures
 import io
@@ -260,7 +262,9 @@ def inject_css() -> None:
     }
 
     /* ── Mobile ── */
+    .ft-mobile-br { display: none; }
     @media (max-width: 768px) {
+        .ft-mobile-br { display: block; }
         .block-container {
             padding-left: 1rem !important;
             padding-right: 1rem !important;
@@ -324,7 +328,7 @@ def footer() -> None:
     <div class="ft-footer">
         <img src="data:image/png;base64,{_logo_b64()}" style="height:24px;width:auto;" />
         <div class="ft-footer-right">
-            <span>Built at Le Wagon Paris · Data Science &amp; AI #2271 · June 2026</span>
+            <span>Le Wagon · Data Science &amp; AI Bootcamp #2271 · 2026</span>
         </div>
     </div>
     """, unsafe_allow_html=True)

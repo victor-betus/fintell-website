@@ -74,10 +74,10 @@ def render_hero() -> None:
     <div style="padding:0.5rem 0 0.75rem;text-align:center;">
         <img src="data:image/png;base64,{_logo_b64()}" style="height:72px;width:auto;margin-bottom:0.25rem;" />
         <p style="font-size:1.15rem;color:#374151;margin:0.25rem 0 0.15rem;line-height:1.5;">
-            AI competitive intelligence, straight from user reviews.
+            AI competitive intelligence,<br class="ft-mobile-br" /> straight from user reviews.
         </p>
         <p style="font-size:0.95rem;color:#9ca3af;margin-bottom:1.25rem;">
-            Turn thousands of customer reviews into strategic decisions.
+            Turn thousands of customer reviews<br class="ft-mobile-br" /> into strategic decisions.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -90,23 +90,25 @@ def render_search_card() -> None:
         tab_analyze, tab_matrix = st.tabs(["Analyze a review", "Competitive Intelligence"])
 
         with tab_analyze:
-            review = st.text_area(
-                label="review",
-                label_visibility="collapsed",
-                placeholder="Paste a banking app review...",
-                height=130,
-                key="home_review",
-            )
-            if st.button("Analyze", type="primary", use_container_width=True, key="home_analyze_btn"):
-                if not review.strip():
-                    st.warning("Please enter a review.")
-                else:
-                    try:
-                        sent_data, cat_data = analyze_with_animation(review.strip())
-                        sentiment, confidence, category = parse_result(sent_data, cat_data)
-                        render_result_card(sentiment, confidence, category)
-                    except Exception as exc:
-                        st.error(f"API error: {exc}")
+            _, inner, _ = st.columns([1, 3, 1])
+            with inner:
+                review = st.text_area(
+                    label="review",
+                    label_visibility="collapsed",
+                    placeholder="Paste a banking app review...",
+                    height=130,
+                    key="home_review",
+                )
+                if st.button("Analyze", type="primary", use_container_width=True, key="home_analyze_btn"):
+                    if not review.strip():
+                        st.warning("Please enter a review.")
+                    else:
+                        try:
+                            sent_data, cat_data = analyze_with_animation(review.strip())
+                            sentiment, confidence, category = parse_result(sent_data, cat_data)
+                            render_result_card(sentiment, confidence, category)
+                        except Exception as exc:
+                            st.error(f"API error: {exc}")
 
         with tab_matrix:
             selected_banks: list[str] = st.pills(
@@ -327,8 +329,8 @@ def _tier_card_html(tier: dict) -> str:
 
 
 def render_pricing() -> None:
-    _anchor("pricing")
     st.markdown('<hr class="ft-divider"/>', unsafe_allow_html=True)
+    _anchor("pricing")
     st.markdown("## Simple, honest pricing.")
     st.write("Start free. Buy us a drink when you're ready.")
     st.markdown("<br>", unsafe_allow_html=True)
