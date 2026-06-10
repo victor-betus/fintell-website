@@ -88,7 +88,7 @@ def render_search_card() -> None:
     _anchor("product")
     _, col, _ = st.columns([1, 8, 1])
     with col:
-        tab_analyze, tab_matrix = st.tabs(["Analyze a review", "Competitive Intelligence"])
+        tab_analyze, tab_matrix = st.tabs(["Analyze a review", "Competitive Matrix"])
 
         with tab_analyze:
             _, inner, _ = st.columns([1, 3, 1])
