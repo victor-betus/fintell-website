@@ -1,6 +1,7 @@
 """Fintell — single-page app."""
 
 import random
+import threading
 
 import streamlit as st
 from utils import (
@@ -8,7 +9,7 @@ from utils import (
     analyze_with_animation, parse_result, render_result_card,
     real_scores, real_trends, matrix_html, trend_chart,
     run_scrape_animation,
-    BANKS, TOPICS, PERIODS, PAYPAL_CHOUQUETTES, PAYPAL_DYSON, PAYPAL_SF,
+    BANKS, TOPICS, PERIODS, PAYPAL_CHOUQUETTES, PAYPAL_DYSON, PAYPAL_SF, API_BASE,
     FREE_TOPIC_COUNT, PRO_PASSWORD,
 )
 
@@ -402,6 +403,14 @@ def main() -> None:
     )
     inject_css()
     nav()
+    if not st.session_state.get("api_warmed"):
+        threading.Thread(
+            target=lambda: __import__("requests").get(
+                f"{API_BASE}/predict_sentiment", params={"review": "ok"}, timeout=30
+            ),
+            daemon=True,
+        ).start()
+        st.session_state["api_warmed"] = True
     render_hero()
     render_search_card()
     render_about()
