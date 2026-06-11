@@ -109,8 +109,8 @@ def render_search_card() -> None:
                             if review_en != review.strip():
                                 st.caption("Translated to English for analysis.")
                             sent_data, cat_data = analyze_with_animation(review_en)
-                            sentiment, confidence, category = parse_result(sent_data, cat_data)
-                            render_result_card(sentiment, confidence, category)
+                            sentiment, confidence, category, cat_confidence = parse_result(sent_data, cat_data)
+                            render_result_card(sentiment, confidence, category, cat_confidence)
                             log_review_to_sheet(review_en, review.strip(), sentiment, confidence, category)
                         except Exception as exc:
                             st.error(f"API error: {exc}")

@@ -425,7 +425,7 @@ def analyze_with_animation(review: str) -> tuple[dict, dict]:
     return sent, cat
 
 
-def parse_result(sent_data: dict, cat_data: dict) -> tuple[str, float, str]:
+def parse_result(sent_data: dict, cat_data: dict) -> tuple[str, float, str, float]:
     sentiment = (
         sent_data.get("sentiment") or sent_data.get("label")
         or sent_data.get("prediction") or "unknown"
@@ -439,20 +439,79 @@ def parse_result(sent_data: dict, cat_data: dict) -> tuple[str, float, str]:
         cat_data.get("category") or cat_data.get("label")
         or cat_data.get("prediction") or "Unknown"
     )
-    return sentiment, confidence, category
+    raw_cat_conf = (
+        cat_data.get("confidence") or cat_data.get("score")
+        or cat_data.get("probability") or 0
+    )
+    cat_confidence = float(raw_cat_conf) if float(raw_cat_conf) <= 1 else float(raw_cat_conf) / 100
+    return sentiment, confidence, category, cat_confidence
 
 
-def render_result_card(sentiment: str, confidence: float, category: str) -> None:
-    is_pos = sentiment == "positive"
-    cls = "ft-result ft-result-pos" if is_pos else "ft-result ft-result-neg"
+def _sent_emoji(sentiment: str) -> str:
+    if sentiment == "positive":
+        return "😊"
+    if sentiment == "negative":
+        return "😤"
+    return "😐"
+
+
+def _sent_color(sentiment: str) -> str:
+    if sentiment == "positive":
+        return "#059669"
+    if sentiment == "negative":
+        return "#ef4444"
+    return "#f59e0b"
+
+
+def _cat_emoji(category: str) -> str:
+    c = category.lower()
+    if "fee" in c or "travel" in c:
+        return "✈️"
+    if "support" in c or "access" in c:
+        return "🎧"
+    if "transfer" in c or "payment" in c:
+        return "💸"
+    if "transaction" in c or "feature" in c or "usabilit" in c:
+        return "⚡"
+    if "login" in c or "navigation" in c:
+        return "🔐"
+    if "performance" in c or "crash" in c or "update" in c:
+        return "🚀"
+    if "card" in c:
+        return "💳"
+    return "🏷️"
+
+
+def render_result_card(sentiment: str, confidence: float, category: str, cat_confidence: float = 0.0) -> None:
+    emoji = _sent_emoji(sentiment)
+    color = _sent_color(sentiment)
+    cat_emoji = _cat_emoji(category)
+    cat_conf_html = (
+        f'<div style="font-size:0.8rem;color:#9ca3af;margin-top:3px;">Confidence {cat_confidence:.1%}</div>'
+        if cat_confidence > 0 else ""
+    )
     st.markdown(f"""
-    <div class="{cls}">
-        <div class="ft-result-left">
-            <div class="ft-sentiment">{sentiment.upper()}</div>
-            <div class="ft-confidence">Confidence {confidence:.1%}</div>
+    <div style="border:1px solid #e5e7eb;border-left:4px solid {color};border-radius:12px;
+                padding:1.25rem 1.5rem;background:#ffffff;margin-top:1rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.9rem;">
+            <span style="font-size:2rem;line-height:1;">{emoji}</span>
+            <div>
+                <div style="font-size:1.6rem;font-weight:700;letter-spacing:-1px;color:{color};line-height:1.1;">
+                    {sentiment.upper()}
+                </div>
+                <div style="font-size:0.82rem;color:#9ca3af;margin-top:3px;">Confidence {confidence:.1%}</div>
+            </div>
         </div>
-        <div class="ft-result-right">
-            <span class="ft-cat-pill">{category}</span>
+        <div style="border-top:1px solid #f3f4f6;padding-top:0.85rem;">
+            <div style="display:flex;align-items:flex-start;gap:0.65rem;">
+                <span style="font-size:1.5rem;line-height:1.3;">{cat_emoji}</span>
+                <div>
+                    <div style="font-size:0.92rem;font-weight:600;color:#0a0a0a;line-height:1.35;">
+                        {category}
+                    </div>
+                    {cat_conf_html}
+                </div>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
