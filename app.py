@@ -93,10 +93,12 @@ def render_search_card() -> None:
         with tab_analyze:
             _, inner, _ = st.columns([1, 3, 1])
             with inner:
+                st.markdown('<p style="text-align:center;font-size:0.72rem;color:#9ca3af;margin:0 0 0.25rem;">✏️ Example review · feel free to edit or replace it.</p>', unsafe_allow_html=True)
                 review = st.text_area(
                     label="review",
                     label_visibility="collapsed",
-                    placeholder="e.g. The app is great overall but customer support takes forever to respond and I got charged twice last month with no explanation.",
+                    placeholder="e.g. The app is great overall but customer support takes forever to respond.",
+                    value="Great app, support fixed my issue in 10 min. Highly recommend! 😉",
                     height=130,
                     key="home_review",
                 )
